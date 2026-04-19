@@ -18,13 +18,11 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 # LEITURA DOS DADOS
 # ===================
 
-dados = pd.read_excel("dados.xlsx")
-dados.columns = dados.columns.str.strip()
 
 import pandas as pd
 import numpy as np
 
-dados = pd.read_excel("dados.xlsx")
+dados = pd.read_excel("dados/dados.xlsx")
 dados.columns = dados.columns.str.strip()
 
 desc = dados.describe().T[['mean', 'std', 'min', 'max']]
