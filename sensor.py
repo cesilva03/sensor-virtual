@@ -199,6 +199,15 @@ for r in [res_c1, res_c2]:
 # =============================================================
 plt.style.use('seaborn-v0_8-whitegrid')
 
+plt.rcParams.update({
+    'font.size': 12,
+    'axes.titlesize': 16,
+    'axes.labelsize': 13,
+    'legend.fontsize': 11,
+    'xtick.labelsize': 11,
+    'ytick.labelsize': 11
+})
+
 cores = {
     "c1": "#1f77b4",   # azul
     "c2": "#d62728",   # vermelho
@@ -206,9 +215,13 @@ cores = {
 }
 
 def salvar_figura(fig, nome):
-    fig.savefig(nome, dpi=400, bbox_inches='tight')
+    fig.savefig(
+        nome,
+        dpi=600,
+        bbox_inches='tight',
+        facecolor='white'
+    )
     print(f"Figura salva: {nome}")
-
 
 # =============================================================
 # FUNÇÕES DE GRÁFICO
@@ -244,18 +257,67 @@ def grafico_paridade(res, cenario, cor, nome_arquivo):
     plt.close(fig)
 
 
-def grafico_temporal(res, cenario, cor, nome_arquivo):
+# =============================================================
+# LIMITE GLOBAL PARA PADRONIZAR ESCALA
+# =============================================================
+
+y_max_global = max(
+    res_c1['y_full'].max(),
+    res_c1['y_pred_cv'].max(),
+    res_c2['y_full'].max(),
+    res_c2['y_pred_cv'].max()
+)
+
+# margem superior para não cortar pontos
+y_max_global *= 1.10
+
+
+# =============================================================
+# FUNÇÃO GRÁFICO TEMPORAL (PADRONIZADA)
+# =============================================================
+
+def grafico_temporal(res, cenario, cor, nome_arquivo, y_limite):
+
     fig, ax = plt.subplots(figsize=(9, 5))
+
+    # melhora ajuste visual
+    fig.tight_layout()
 
     obs_idx = np.arange(len(res['y_full']))
 
-    ax.scatter(obs_idx, res['y_full'],
-               color=cores["obs"], s=30,
-               label='Observado', zorder=3)
+    # pontos observados
+    ax.scatter(
+        obs_idx,
+        res['y_full'],
+        color=cores["obs"],
+        s=30,
+        label='Observado',
+        zorder=3
+    )
 
-    ax.scatter(obs_idx, res['y_pred_cv'],
-               color=cor, marker='+', s=50,
-               label='Predito (CV)', zorder=2)
+    # pontos preditos
+    ax.scatter(
+        obs_idx,
+        res['y_pred_cv'],
+        color=cor,
+        marker='+',
+        s=50,
+        label='Predito (CV)',
+        zorder=2
+    )
+
+    # =========================================================
+    # ESCALA PADRONIZADA ENTRE OS CENÁRIOS
+    # =========================================================
+
+    ax.set_ylim(-0.2, y_limite)
+
+    # intervalos padronizados no eixo Y
+    ax.set_yticks(np.arange(0, y_limite + 1, 2))
+
+    # =========================================================
+    # TÍTULOS E RÓTULOS
+    # =========================================================
 
     ax.set_title(
         f"{cenario} — Observado × Predito\n"
@@ -266,10 +328,15 @@ def grafico_temporal(res, cenario, cor, nome_arquivo):
     ax.set_xlabel("Número da observação")
     ax.set_ylabel("Microcystis aeruginosa (mm³/L)")
 
+    # legenda
     ax.legend()
+
+    # grade
     ax.grid(True, linestyle='--', alpha=0.4)
 
+    # salva figura
     salvar_figura(fig, nome_arquivo)
+
     plt.close(fig)
 
 
@@ -277,10 +344,34 @@ def grafico_temporal(res, cenario, cor, nome_arquivo):
 # GERAÇÃO DOS GRÁFICOS
 # =============================================================
 
-grafico_paridade(res_c1, "Cenário I", cores["c1"], "c1_paridade.png")
-grafico_temporal(res_c1, "Cenário I", cores["c1"], "c1_temporal.png")
+grafico_paridade(
+    res_c1,
+    "Cenário I",
+    cores["c1"],
+    "c1_paridade.png"
+)
 
-grafico_paridade(res_c2, "Cenário II", cores["c2"], "c2_paridade.png")
-grafico_temporal(res_c2, "Cenário II", cores["c2"], "c2_temporal.png")
+grafico_temporal(
+    res_c1,
+    "Cenário I",
+    cores["c1"],
+    "c1_temporal.png",
+    y_max_global
+)
 
-print("\nGráficos salvos em: graficos_sensor_virtual.png")
+grafico_paridade(
+    res_c2,
+    "Cenário II",
+    cores["c2"],
+    "c2_paridade.png"
+)
+
+grafico_temporal(
+    res_c2,
+    "Cenário II",
+    cores["c2"],
+    "c2_temporal.png",
+    y_max_global
+)
+
+print("\nGráficos gerados com escala padronizada.")
